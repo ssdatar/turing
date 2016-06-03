@@ -132,10 +132,7 @@ var TuringMesh = function() {
   this.thickness = 70;
   this.opacity = 1;
   this.turing_scaling_factor = 50;
-  this.knot = false;
-  this.torus = true;
-  this.sphere = false;
-  this.geom_value = "Torus";
+  this.geom_value = "Donut";
   this.shapeHasChanged = false;
   this.mat3_color = 0x43C6DB;
   this.mat_wireframe = true;
@@ -320,8 +317,8 @@ var TuringMesh = function() {
 // add object
 var p = new TuringMesh();
 p.create_turing_pattern();
-parent.add(p.mesh);
-parent.add(p.mesh3);
+parent.add(p.mesh4);
+parent.add(p.mesh5);
 
 // parent2.add(p.mesh4);
 // parent2.add(p.mesh5);
@@ -349,9 +346,6 @@ gui_geom.onChange(function(value){
   p.geom_value = value;
 
   if(value === "Donut"){
-    p.torus = true;
-    p.knot = false;
-    p.sphere = false;
     parent.remove(p.mesh);
     parent.remove(p.mesh3);
     parent.remove(p.mesh4);
@@ -361,9 +355,6 @@ gui_geom.onChange(function(value){
     parent.add(p.mesh4);
     parent.add(p.mesh5);
   }else if(value === "Knot"){
-    p.torus = false;
-    p.knot = true;
-    p.sphere = false;
     parent.remove(p.mesh);
     parent.remove(p.mesh3);
     parent.remove(p.mesh4);
@@ -373,9 +364,6 @@ gui_geom.onChange(function(value){
     parent.add(p.mesh7);
     parent.add(p.mesh9);
   }else{
-    p.torus = false;
-    p.knot = false;
-    p.sphere = true;
     p.shapeHasChanged = true;
     parent.remove(p.mesh);
     parent.remove(p.mesh3);
