@@ -114,9 +114,12 @@ var TuringMesh = function() {
 
   var normalMatrix2 = [],
       normalMatrix3 = [],
-      normalMatrix4 = [];
+      normalMatrix4 = [],
+      normalMatrix5 = [],
+      normalMatrix6 = [];
   var originalVertices = [],
-      originalVertices2 = [];
+      originalVertices2 = [],
+      originalVertices3 = [];
 
   // End Turing Pattern Parameters ---------------------------      
 
@@ -129,25 +132,34 @@ var TuringMesh = function() {
   this.thickness = 70;
   this.opacity = 1;
   this.turing_scaling_factor = 50;
-  this.knot = true;
-  this.torus = false;
+  this.knot = false;
+  this.torus = true;
+  this.sphere = false;
+  this.geom_value = "Torus";
   this.shapeHasChanged = false;
+  this.mat3_color = 0x43C6DB;
+  this.mat_wireframe = true;
+  this.turing_scaling_factor = 50;
+  this.rotation_x = 0.004;
+  this.rotation_y = 0.002;
 
 
   this.create_turing_pattern = function() {
     //main geometry
 
     
-    // if (this.knot) { 
-        this.geometry = new THREE.SphereBufferGeometry(this.radius, this.thickness, parseInt(this.mesh_detail), parseInt(this.mesh_detail));
-        this.geometry2 = new THREE.SphereBufferGeometry(this.radius,this.thickness, parseInt(this.mesh_detail), parseInt(this.mesh_detail));
-        this.geom3 = new THREE.SphereBufferGeometry(this.radius,this.thickness/1.01, parseInt(this.mesh_detail), parseInt(this.mesh_detail));
-      // }
-    // if (this.torus) {
-      this.geom4 = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-      this.geom5 = new THREE.TorusBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
-      this.geom6 = new THREE.TorusBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
-    // }
+    this.geometry = new THREE.SphereBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geometry2 = new THREE.SphereBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geom3 = new THREE.SphereBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
+
+    this.geom4 = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geom5 = new THREE.TorusBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geom6 = new THREE.TorusBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
+
+    this.geom7 = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geom8 = new THREE.TorusKnotBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
+    this.geom9 = new THREE.TorusKnotBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
+
     this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     this.geometry.computeFaceNormals();
     this.geometry.computeVertexNormals();
@@ -157,12 +169,17 @@ var TuringMesh = function() {
     this.geom4.computeFaceNormals();
     this.geom4.computeVertexNormals();
 
+    this.geom7.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+
+    this.geom7.computeFaceNormals();
+    this.geom7.computeVertexNormals();
+
     this.material = new THREE.MeshLambertMaterial({
       color: 0xffffff,
       emissive: 0x111111,
       shading: THREE.SmoothShading,
       side: THREE.DoubleSide,
-      wireframe: true,
+      wireframe: this.mat_wireframe,
       wireframeLinewidth: .001
     });
     this.material.transparent = true;
@@ -172,6 +189,9 @@ var TuringMesh = function() {
 
     this.mesh4 = new THREE.Mesh(this.geom4, this.material);
     this.mesh4.position.set(0, 0, 0);
+
+    this.mesh7 = new THREE.Mesh(this.geom7, this.material);
+    this.mesh7.position.set(0, 0, 0);    
 
     //create matrix of normal vectors for the original surface
     this.edges = new THREE.VertexNormalsHelper( this.mesh, 1, 0x00ff00, 1 );
@@ -187,6 +207,12 @@ var TuringMesh = function() {
         normalMatrix4.push([normalMatrix3[j]-normalMatrix3[j+3], normalMatrix3[j+1]-normalMatrix3[j+4], normalMatrix3[j+2]-normalMatrix3[j+5]]);
     }
 
+    this.edges3 = new THREE.VertexNormalsHelper( this.mesh7, 1, 0x00ff00, 1 );
+    normalMatrix5 = this.edges3.geometry.attributes.position.array;
+    for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6){
+        normalMatrix6.push([normalMatrix5[j]-normalMatrix5[j+3], normalMatrix5[j+1]-normalMatrix5[j+4], normalMatrix5[j+2]-normalMatrix5[j+5]]);
+    }
+
     //geometry used as reference for original points
     // this.geometry2 = new THREE.SphereBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
     this.geometry2.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
@@ -194,12 +220,16 @@ var TuringMesh = function() {
 
     this.geom5.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     originalVertices2 = this.geom5.attributes.position.array;
+
+    this.geom8.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+    originalVertices3 = this.geom8.attributes.position.array;
 //console.log(originalVertices2.length);
 
     //geometry for inner light
     // this.geom3 = new THREE.SphereBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
     this.geom3.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     this.geom6.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+    this.geom9.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
     
     this.material3 = new THREE.MeshLambertMaterial({
       color: 0xffffff,
@@ -215,6 +245,9 @@ var TuringMesh = function() {
 
     this.mesh5 = new THREE.Mesh(this.geom6, this.material3);
     this.mesh5.position.set(0, 0, 0);
+
+    this.mesh9 = new THREE.Mesh(this.geom9, this.material3);
+    this.mesh9.position.set(0, 0, 0);
    
   }
   this.update_turing = function() {
@@ -244,30 +277,41 @@ var TuringMesh = function() {
     //update vertices by extending along the direction of the vertex normal vectors
     var vertices = this.geometry.attributes.position.array;
     var vertices2 = this.geom4.attributes.position.array;
+    var vertices3 = this.geom7.attributes.position.array;
 
     for (var i = 0, j = 0, l = 39999; i < l; i++, j += 3) {
       scalingFactor = this.turing_scaling_factor*temp[i % 199][Math.floor(i / 199)];
       
-    if(this.knot) {
-      vertices[j] = originalVertices[j] - scalingFactor*normalMatrix2[i][0];
-      vertices[j+1] = originalVertices[j+1] - scalingFactor*normalMatrix2[i][1];
-      vertices[j+2] = originalVertices[j+2] - scalingFactor*normalMatrix2[i][2];
+    if(this.geom_value === "Knot") {
+      vertices3[j] = originalVertices3[j] - scalingFactor*normalMatrix6[i][0];
+      vertices3[j+1] = originalVertices3[j+1] - scalingFactor*normalMatrix6[i][1];
+      vertices3[j+2] = originalVertices3[j+2] - scalingFactor*normalMatrix6[i][2];
      } 
-    else {
+    else if(this.geom_value === "Donut") {
       vertices2[j] = originalVertices2[j] - scalingFactor*normalMatrix4[i][0];
       vertices2[j+1] = originalVertices2[j+1] - scalingFactor*normalMatrix4[i][1];
       vertices2[j+2] = originalVertices2[j+2] - scalingFactor*normalMatrix4[i][2];
+    }
+    else{
+      vertices[j] = originalVertices[j] - scalingFactor*normalMatrix2[i][0];
+      vertices[j+1] = originalVertices[j+1] - scalingFactor*normalMatrix2[i][1];
+      vertices[j+2] = originalVertices[j+2] - scalingFactor*normalMatrix2[i][2];
     }
   }
     
     
     this.mesh.geometry.attributes.position.needsUpdate = true;
     this.mesh4.geometry.attributes.position.needsUpdate = true;
+    this.mesh7.geometry.attributes.position.needsUpdate = true;
+
     p.mesh.geometry.computeFaceNormals();
     p.mesh.geometry.computeVertexNormals();
 
     p.mesh4.geometry.computeFaceNormals();
     p.mesh4.geometry.computeVertexNormals();
+
+    p.mesh7.geometry.computeFaceNormals();
+    p.mesh7.geometry.computeVertexNormals();
 
 
   }
@@ -300,33 +344,73 @@ gui_scale_factor.onChange(function(value) {
   p.turing_scaling_factor = value;
 });
 
-var gui_geom1 = gui.add(p, 'torus').listen();
-gui_geom1.onChange(function(value) {
-  p.torus = true;
-  p.knot = false;
-  p.shapeHasChanged = true;
-  parent.remove(p.mesh);
-  parent.remove(p.mesh3);
-  parent.add(p.mesh4);
-  parent.add(p.mesh5);
+var gui_geom = gui.add( p, 'geom_value', ["Donut", "Knot", "Sphere"] ).name('Geometry').listen();
+gui_geom.onChange(function(value){   
+  p.geom_value = value;
+
+  if(value === "Donut"){
+    p.torus = true;
+    p.knot = false;
+    p.sphere = false;
+    parent.remove(p.mesh);
+    parent.remove(p.mesh3);
+    parent.remove(p.mesh4);
+    parent.remove(p.mesh5);
+    parent.remove(p.mesh7);
+    parent.remove(p.mesh9);
+    parent.add(p.mesh4);
+    parent.add(p.mesh5);
+  }else if(value === "Knot"){
+    p.torus = false;
+    p.knot = true;
+    p.sphere = false;
+    parent.remove(p.mesh);
+    parent.remove(p.mesh3);
+    parent.remove(p.mesh4);
+    parent.remove(p.mesh5);
+    parent.remove(p.mesh7);
+    parent.remove(p.mesh9);
+    parent.add(p.mesh7);
+    parent.add(p.mesh9);
+  }else{
+    p.torus = false;
+    p.knot = false;
+    p.sphere = true;
+    p.shapeHasChanged = true;
+    parent.remove(p.mesh);
+    parent.remove(p.mesh3);
+    parent.remove(p.mesh4);
+    parent.remove(p.mesh5);
+    parent.remove(p.mesh7);
+    parent.remove(p.mesh9);
+    parent.add(p.mesh);
+    parent.add(p.mesh3);
+  }
 });
 
-var gui_geom2 = gui.add(p, 'knot').listen();
-gui_geom2.onChange(function(value) {
-  p.torus = false;
-  p.knot = true;
-  p.shapeHasChanged = true;
-  parent.remove(p.mesh4);
-  parent.remove(p.mesh5);
-  parent.add(p.mesh);
-  parent.add(p.mesh3);
-
-  console.log(parent);
-  //console.log('chosen knot');
+var gui_color = gui.addColor( p, 'mat3_color' ).name('Color').listen();
+gui_color.onChange(function(value){
+  p.mesh3.material.emissive.setHex( value.replace("#", "0x") );
+p.mesh3.material.needsUpdate = true;   
 });
 
+var gui_wireframe = gui.add( p, 'mat_wireframe', [true, false] ).name('Wireframe').listen();
+gui_wireframe.onChange(function(value){   
 
+var val = (value === "true");
+  p.mesh.material.wireframe = val;  
+  p.mesh.material.needsUpdate = true;  
+});
 
+var gui_rotation_x = gui.add(p, 'rotation_x', 0, 0.05).name('X-rotation');
+  gui_rotation_x.onChange(function(value) {
+  p.rotation_x = value;
+});
+
+var gui_rotation_y = gui.add(p, 'rotation_y', 0, 0.05).name('Y-rotation');
+  gui_rotation_y.onChange(function(value) {
+  p.rotation_y = value;
+});
 
 
 // ------------------------------------------------------------------------------------------------
@@ -336,7 +420,7 @@ gui_geom2.onChange(function(value) {
 var ambientLight = new THREE.AmbientLight(0x000000);
 scene.add(ambientLight);
 
-var sphere = new THREE.SphereGeometry(50, 100, 50);
+var lightGeom = new THREE.BoxGeometry(1,1,1);
 var dist_until_0 = 1500;
 var lights = [];
 lights[0] = new THREE.PointLight(0xaa9999, 1, dist_until_0);
@@ -349,13 +433,13 @@ lights[0].position.set(SCENE_WIDTH, SCENE_WIDTH, SCENE_WIDTH);
 lights[1].position.set(-SCENE_WIDTH, SCENE_WIDTH, SCENE_WIDTH);
 lights[2].position.set(0, SCENE_WIDTH, -SCENE_WIDTH);
 
-lights[0].add(new THREE.Mesh(sphere, new THREE.MeshLambertMaterial({
+lights[0].add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
   color: 0xff0040
 })));
-lights[1].add(new THREE.Mesh(sphere, new THREE.MeshLambertMaterial({
+lights[1].add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
   color: 0x0040ff
 })));
-lights[2].add(new THREE.Mesh(sphere, new THREE.MeshLambertMaterial({
+lights[2].add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
   color: 0x80ff80
 })));
 
@@ -363,21 +447,21 @@ scene.add(lights[0]);
 scene.add(lights[1]);
 scene.add(lights[2]);
 
-light1 = new THREE.PointLight(0xff0040, 1, 300);
-light1.add(new THREE.Mesh(sphere, new THREE.MeshPhongMaterial({
-  color: 0xff0040
+light1 = new THREE.PointLight(0xf91122, 1, 300);
+light1.add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
+  color: 0xff6677
 })));
 parent.add(light1);
 
-light2 = new THREE.PointLight(0x0040ff, 1, 300);
-light2.add(new THREE.Mesh(sphere, new THREE.MeshPhongMaterial({
-  color: 0x0040ff
+light2 = new THREE.PointLight(0x1122f9, 1, 300);
+light2.add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
+  color: 0x6677ee
 })));
 parent.add(light2);
 
-light3 = new THREE.PointLight(0x80ff80, 1, 300);
-light3.add(new THREE.Mesh(sphere, new THREE.MeshPhongMaterial({
-  color: 0x80ff80
+light3 = new THREE.PointLight(0x22f911, 1, 300);
+light3.add(new THREE.Mesh(lightGeom, new THREE.MeshLambertMaterial({
+  color: 0x7aee60
 })));
 parent.add(light3);
 
@@ -390,11 +474,8 @@ function draw() {
   stats.begin();
 
   // rotate parent
-  parent.rotation.y += .002;
-  parent.rotation.x += .004;
-
-  parent2.rotation.y += .002;
-  parent2.rotation.x += .004;
+  parent.rotation.y += p.rotation_y;
+ parent.rotation.x += p.rotation_x;
 
   // update mesh
   p.update_turing();
@@ -402,17 +483,22 @@ function draw() {
 
   // update lights
   var k = Date.now() * 0.0001,
-      g = SCENE_WIDTH / 2;
-  
-  light1.position.x = Math.sin(k * 0.7) * g;
-  light1.position.y = Math.cos(k * 0.5) * g;
-  light1.position.z = Math.cos(k * 0.3) * g;
-  light2.position.x = Math.cos(k * 0.3) * g;
-  light2.position.y = Math.sin(k * 0.5) * g;
-  light2.position.z = Math.sin(k * 0.7) * g;
-  light3.position.x = Math.sin(k * 0.7) * g;
-  light3.position.y = Math.cos(k * 0.3) * g;
-  light3.position.z = Math.sin(k * 0.5) * g;
+    g = SCENE_WIDTH / 2;
+  light1.position.x = 0;
+  light1.position.y = Math.cos(k * 0.7) * g/2;
+  light1.position.z = Math.sin(k * 0.7) * g/2 - g/2;
+  light1.rotateX( 0.1 );
+  light1.rotateY( 0.1 );
+  light2.position.x = 0.866*(Math.cos(k * 1) * g/2-g/2);
+  light2.position.y = Math.sin(k * 1) * g/2;
+  light2.position.z = -0.5*light2.position.x;
+  light2.rotateX( 0.1 );
+  light2.rotateY( 0.1 );
+  light3.position.x = -0.866*(Math.sin(k * 2) * g/2-g/2);
+  light3.position.y = Math.cos(k * 2) * g/2;
+  light3.position.z = 0.5*light3.position.x;
+  light3.rotateX( 0.1 );
+  light3.rotateY( 0.1 );
 
   // render scene
   renderer.render(scene, camera);
