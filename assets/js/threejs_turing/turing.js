@@ -9,16 +9,14 @@ var TuringMesh = function() {
     var dx = 1;
     var dy = 1;
 
-
-
     var numStep = T / dt;
     var numComp = N / dx;
 
     //LE model parameters
     var Du = 1;
     var Dv = 1;
-    this.a = 7;
-    this.b = 1.5;
+    this.a = 29.4;
+    this.b = 1.555;
     var c = 1;
     var sigma = 20;
 
@@ -38,8 +36,7 @@ var TuringMesh = function() {
     A[0][numComp - 1] = 1;
     A[numComp - 1][0] = 1;
 
-    //set init values for u and v
-
+    //create common helper matrices
     var ones_matrix = [];
     for (var i = 0; i < numComp; i++) {
         ones_matrix[i] = [];
@@ -64,27 +61,23 @@ var TuringMesh = function() {
         }
     }
 
+    //set random init values for u and v
     var u = numeric.add(numeric.mul(0.15, ones_matrix), numeric.mul(0.02, rand_matrix));
-
     var v = numeric.add(numeric.mul(0.05, ones_matrix), numeric.mul(0.002, rand_matrix));
 
+    //create empty dummy matrices
     var unew = zero_matrix;
     var vnew = zero_matrix;
 
-    var mean_u = math.mean(u);
-    var mean_v = math.mean(v);
-
-    var sphere_matrix = [],
-        normalMatrix3 = [],
-        donut_matrix = [],
-        normalMatrix5 = [],
-        knot_matrix = [];
-    var originalVertices = [],
-        originaldonut_vertices = [],
-        originalVertices3 = [];
-
     // End Turing Pattern Parameters ---------------------------      
 
+    //initialize arrays/matrices for geometries
+    var sphere_matrix = [],
+        donut_matrix = [],
+        knot_matrix = [];
+    var originalsphere_vertices = [],
+        originaldonut_vertices = [],
+        originalknot_vertices = [];
 
     //geometry parameters
     this.mesh_detail = numComp - 1;
@@ -102,12 +95,9 @@ var TuringMesh = function() {
     this.rotation_x = 0.004;
     this.rotation_y = 0.002;
 
-
-    this.create_turing_pattern = function() {
-        //main geometry
-
-        // put in a create material method
-        this.material = new THREE.MeshNormalMaterial({
+    //create material for the outer mesh w/ pattern
+    this.create_material = function(){
+        this.material = new THREE.MeshLambertMaterial({
             color: 0xffffff,
             emissive: 0x111111,
             shading: THREE.SmoothShading,
@@ -117,73 +107,11 @@ var TuringMesh = function() {
         });
         this.material.transparent = true;
         this.material.opacity = this.opacity;
+    }
 
-        // put in a create donut method
-        this.donut_geometry = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.donut_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.donut_geometry.computeFaceNormals();
-        this.donut_geometry.computeVertexNormals();
-        this.donut = new THREE.Mesh(this.donut_geometry, this.material);
-        this.donut.position.set(0, 0, 0);
-
-        this.geometry = new THREE.SphereBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geometry2 = new THREE.SphereBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geom3 = new THREE.SphereBufferGeometry(this.radius, this.thickness / 1.01, this.mesh_detail, this.mesh_detail);        
-        this.geom5 = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geom6 = new THREE.TorusBufferGeometry(this.radius, this.thickness / 1.01, this.mesh_detail, this.mesh_detail);
-        this.geom7 = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geom8 = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geom9 = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness / 1.01, this.mesh_detail, this.mesh_detail);
-        this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.geometry.computeFaceNormals();
-        this.geometry.computeVertexNormals();
-        this.geom7.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.geom7.computeFaceNormals();
-        this.geom7.computeVertexNormals();
-        this.mesh = new THREE.Mesh(this.geometry, this.material);
-        this.mesh.position.set(0, 0, 0);
-        this.mesh7 = new THREE.Mesh(this.geom7, this.material);
-        this.mesh7.position.set(0, 0, 0);
-
-        //create matrix of normal vectors for the original surface
-        this.edges = new THREE.VertexNormalsHelper(this.mesh, 1, 0x00ff00, 1);
-        normalMatrix = this.edges.geometry.attributes.position.array;
-        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
-            sphere_matrix.push([normalMatrix[j] - normalMatrix[j + 3], normalMatrix[j + 1] - normalMatrix[j + 4], normalMatrix[j + 2] - normalMatrix[j + 5]]);
-        }
-
-
-        this.edges2 = new THREE.VertexNormalsHelper(this.donut, 1, 0x00ff00, 1);
-        normalMatrix3 = this.edges2.geometry.attributes.position.array;
-        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
-            donut_matrix.push([normalMatrix3[j] - normalMatrix3[j + 3], normalMatrix3[j + 1] - normalMatrix3[j + 4], normalMatrix3[j + 2] - normalMatrix3[j + 5]]);
-        }
-
-        this.edges3 = new THREE.VertexNormalsHelper(this.mesh7, 1, 0x00ff00, 1);
-        normalMatrix5 = this.edges3.geometry.attributes.position.array;
-        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
-            knot_matrix.push([normalMatrix5[j] - normalMatrix5[j + 3], normalMatrix5[j + 1] - normalMatrix5[j + 4], normalMatrix5[j + 2] - normalMatrix5[j + 5]]);
-        }
-
-        //geometry used as reference for original points
-        // this.geometry2 = new THREE.SphereBufferGeometry(this.radius,this.thickness, this.mesh_detail, this.mesh_detail);
-        this.geometry2.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        originalVertices = this.geometry2.attributes.position.array;
-
-        this.geom5.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        originaldonut_vertices = this.geom5.attributes.position.array;
-
-        this.geom8.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        originalVertices3 = this.geom8.attributes.position.array;
-        //console.log(originaldonut_vertices.length);
-
-        //geometry for inner light
-        // this.geom3 = new THREE.SphereBufferGeometry(this.radius,this.thickness/1.01, this.mesh_detail, this.mesh_detail);
-        this.geom3.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.geom6.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-        this.geom9.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-
-        this.material3 = new THREE.MeshLambertMaterial({
+    //create material for inner mesh w/ light
+    this.create_inner_light_material = function(){
+        this.material_light = new THREE.MeshLambertMaterial({
             color: 0xffffff,
             emissive: 0x43C6DB,
             shading: THREE.SmoothShading,
@@ -191,63 +119,199 @@ var TuringMesh = function() {
             wireframe: false,
             wireframeLinewidth: .001
         });
+    }
 
-        this.mesh3 = new THREE.Mesh(this.geom3, this.material3);
-        this.mesh3.position.set(0, 0, 0);
+    //create donut geometry
+    this.create_donut = function(){
+        //create donut geometry for turing pattern
+        this.donut_geometry = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+        this.donut_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.donut_geometry.computeFaceNormals();
+        this.donut_geometry.computeVertexNormals();
+        this.donut = new THREE.Mesh(this.donut_geometry, this.material);
+        this.donut.position.set(0, 0, 0);
 
+        //calculate normals for each vertex in the default geometry and store in a matrix
+        this.edges_donut = new THREE.VertexNormalsHelper(this.donut, 1, 0x00ff00, 1);
+        normalMatrix3 = this.edges_donut.geometry.attributes.position.array;
+        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
+            donut_matrix.push([normalMatrix3[j] - normalMatrix3[j + 3], normalMatrix3[j + 1] - normalMatrix3[j + 4], normalMatrix3[j + 2] - normalMatrix3[j + 5]]);
+        }
 
+        //create dummy copy of geometry to create reference or original position vector.
+        //if these reference position vectors are create off the same geometry used for the pattern,
+        //it will update every frame for some reason...
+        this.dummy_donut_geometry = new THREE.TorusBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+        this.dummy_donut_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        originaldonut_vertices = this.dummy_donut_geometry.attributes.position.array;
 
-        this.mesh9 = new THREE.Mesh(this.geom9, this.material3);
-        this.mesh9.position.set(0, 0, 0);
+        //create donut geometry for internal light
+        this.donut_light_geometry = new THREE.TorusBufferGeometry(this.radius, this.thickness / 1.2, this.mesh_detail, this.mesh_detail);
+        this.donut_light_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.donut_light = new THREE.Mesh(this.donut_light_geometry, this.material_light);
+        this.donut_light.position.set(0, 0, 0); 
+    }
+
+    //create knot geometry
+    this.create_knot = function(){
+        //create knot geometry for turing pattern
+        this.knot_geometry = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+        this.knot_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.knot_geometry.computeFaceNormals();
+        this.knot_geometry.computeVertexNormals();
+        this.knot = new THREE.Mesh(this.knot_geometry, this.material);
+        this.knot.position.set(0, 0, 0);
+
+        //calculate normals for each vertex in the default geometry and store in a matrix
+        this.edges_knot = new THREE.VertexNormalsHelper(this.knot, 1, 0x00ff00, 1);
+        var normalMatrix = this.edges_knot.geometry.attributes.position.array;
+        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
+            knot_matrix.push([normalMatrix[j] - normalMatrix[j + 3], normalMatrix[j + 1] - normalMatrix[j + 4], normalMatrix[j + 2] - normalMatrix[j + 5]]);
+        }
+
+        //create dummy copy of geometry to create reference or original position vector
+        this.dummy_knot_geometry = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);        
+        this.dummy_knot_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        originalknot_vertices = this.dummy_knot_geometry.attributes.position.array;
+
+        //create geometry for internal light
+        this.knot_light_geometry = new THREE.TorusKnotBufferGeometry(this.radius, this.thickness / 1.2, this.mesh_detail, this.mesh_detail);
+        this.knot_light_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.knot_light = new THREE.Mesh(this.knot_light_geometry, this.material_light);
+        this.knot_light.position.set(0, 0, 0);
+    }
+
+    //create sphere geometry
+    this.create_sphere = function(){
+        //create sphere geometry for turing pattern
+        this.sphere_geometry = new THREE.SphereBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);        
+        this.sphere_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        this.sphere_geometry.computeFaceNormals();
+        this.sphere_geometry.computeVertexNormals();        
+        this.sphere = new THREE.Mesh(this.sphere_geometry, this.material);
+        this.sphere.position.set(0, 0, 0);
+
+        //calculate normals for each vertex in the default geometry and store in a matrix
+        this.edges_sphere = new THREE.VertexNormalsHelper(this.sphere, 1, 0x00ff00, 1);
+        var normalMatrix = this.edges_sphere.geometry.attributes.position.array;
+        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 6) {
+            sphere_matrix.push([normalMatrix[j] - normalMatrix[j + 3], normalMatrix[j + 1] - normalMatrix[j + 4], normalMatrix[j + 2] - normalMatrix[j + 5]]);
+        }
+        
+        //create dummy copy of geometry to create reference or original position vector
+        this.dummy_sphere_geometry = new THREE.SphereBufferGeometry(this.radius, this.thickness, this.mesh_detail, this.mesh_detail);
+        this.dummy_sphere_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+        originalsphere_vertices = this.dummy_sphere_geometry.attributes.position.array;
+        
+        //create geometry for internal light
+        this.sphere_light_geometry = new THREE.SphereBufferGeometry(this.radius, this.thickness / 1.2, this.mesh_detail, this.mesh_detail);        
+        this.sphere_light_geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));      
+        this.sphere_light = new THREE.Mesh(this.sphere_light_geometry, this.material_light);
+        this.sphere_light.position.set(0, 0, 0);
+    }
+
+    this.create_turing_pattern = function() {
+        
+        this.create_material();
+
+        this.create_inner_light_material(); 
+
+        this.create_donut();
+
+        this.create_knot();
+
+        this.create_sphere();              
 
     }
+
     this.update_turing = function() {
 
-
-        // this should be in a separate method
-
-        // FTCS scheme for solving Lengyel-Epstein model ----
-        uv = numeric.div(numeric.mul(u, v), numeric.add(1, numeric.mul(u, u)));
-        u_1 = numeric.add(numeric.mul(alpha_u_x, numeric.dot(A, u)), numeric.mul(alpha_u_y, numeric.dot(u, A)));
-        unew = numeric.add(u, numeric.add(u_1, numeric.mul(dt, numeric.add(numeric.add(this.a, numeric.mul(-1, u)), numeric.mul(-4, uv)))));
-        v_1 = numeric.add(numeric.mul(alpha_v_x, numeric.dot(A, v)), numeric.mul(alpha_v_y, numeric.dot(v, A)));
-        vnew = numeric.add(v, numeric.mul(sigma, numeric.add(numeric.mul(c, v_1), numeric.mul(dt, numeric.mul(this.b, numeric.add(u, numeric.mul(-1, uv)))))));
-        u = unew;
-        v = vnew;
-        mean_u = math.mean(u);
-        mean_v = math.mean(v);
-        // End FTCS scheme for solving Lengyel-Epstein model ----
+        this.ftcs_LE_model();
 
         // Normalize u
-        temp = numeric.sub(v, math.min(v));
-        temp = numeric.div(temp, math.max(temp));
+        normalizedU = numeric.sub(u, math.min(u));
+        normalizedU = numeric.div(normalizedU, math.max(normalizedU));
 
+        //update the current geometry
+        if(this.geom_value === "Donut"){
 
-        var donut_vertices = this.donut_geometry.attributes.position.array;
-        for (var i = 0, j = 0, l = 39999; i < l; i++, j += 3) {
-            scalingFactor = this.turing_scaling_factor * temp[i % 199][Math.floor(i / 199)];
-            if (this.geom_value === "Donut") {
+            var donut_vertices = this.donut_geometry.attributes.position.array;
+         
+            for (var i = 0, j = 0, l = 39999; i < l; i++, j += 3) {
+                scalingFactor = this.turing_scaling_factor * normalizedU[i % 199][Math.floor(i / 199)];
+                
                 donut_vertices[j] = originaldonut_vertices[j] - scalingFactor * donut_matrix[i][0];
                 donut_vertices[j + 1] = originaldonut_vertices[j + 1] - scalingFactor * donut_matrix[i][1];
                 donut_vertices[j + 2] = originaldonut_vertices[j + 2] - scalingFactor * donut_matrix[i][2];
             }
 
-            if (this.geom_value === "Knot") {
-                vertices3[j] = originalVertices3[j] - scalingFactor * knot_matrix[i][0];
-                vertices3[j + 1] = originalVertices3[j + 1] - scalingFactor * knot_matrix[i][1];
-                vertices3[j + 2] = originalVertices3[j + 2] - scalingFactor * knot_matrix[i][2];
+            this.donut.geometry.attributes.position.needsUpdate = true;
+
+            if(this.mat_wireframe === false){
+                this.donut.geometry.computeFaceNormals();
             }
 
-            if (this.geom_value === "Sphere") {
-                vertices[j] = originalVertices[j] - scalingFactor * sphere_matrix[i][0];
-                vertices[j + 1] = originalVertices[j + 1] - scalingFactor * sphere_matrix[i][1];
-                vertices[j + 2] = originalVertices[j + 2] - scalingFactor * sphere_matrix[i][2];
-            }
+            this.donut.geometry.computeVertexNormals();
         }
 
-        this.donut.geometry.attributes.position.needsUpdate = true;
-        // this.donut.geometry.computeFaceNormals(); // you don't need this for wireframes
-        this.donut.geometry.computeVertexNormals();
+        if(this.geom_value === "Knot"){
 
+            var knot_vertices = this.knot_geometry.attributes.position.array;
+    
+            for (var i = 0, j = 0, l = 39999; i < l; i++, j += 3) {
+                scalingFactor = this.turing_scaling_factor * normalizedU[i % 199][Math.floor(i / 199)];
+                    
+                knot_vertices[j] = originalknot_vertices[j] - scalingFactor * knot_matrix[i][0];
+                knot_vertices[j + 1] = originalknot_vertices[j + 1] - scalingFactor * knot_matrix[i][1];
+                knot_vertices[j + 2] = originalknot_vertices[j + 2] - scalingFactor * knot_matrix[i][2];            
+            }
+
+            this.knot.geometry.attributes.position.needsUpdate = true;
+
+            if(this.mat_wireframe === false){
+                this.knot.geometry.computeFaceNormals();
+            }
+
+            this.knot.geometry.computeVertexNormals();
+        }
+
+        if(this.geom_value === "Sphere"){
+
+            var sphere_vertices = this.sphere_geometry.attributes.position.array;
+
+
+            for (var i = 0, j = 0, l = 39999; i < l; i++, j += 3) {
+                scalingFactor = this.turing_scaling_factor * normalizedU[i % 199][Math.floor(i / 199)];
+                
+                sphere_vertices[j] = originalsphere_vertices[j] - scalingFactor * sphere_matrix[i][0];
+                sphere_vertices[j + 1] = originalsphere_vertices[j + 1] - scalingFactor * sphere_matrix[i][1];
+                sphere_vertices[j + 2] = originalsphere_vertices[j + 2] - scalingFactor * sphere_matrix[i][2];
+            
+            }
+
+            this.sphere.geometry.attributes.position.needsUpdate = true;
+            
+            if(this.mat_wireframe === false){
+                this.sphere.geometry.computeFaceNormals();
+            }
+            
+            this.sphere.geometry.computeVertexNormals();
+        }
+
+    }
+
+    this.ftcs_LE_model = function(){
+
+        // FTCS scheme for solving Lengyel-Epstein model ----
+        uv = numeric.div(numeric.mul(u, v), numeric.add(1, numeric.mul(u, u)));
+        u_1 = numeric.add(numeric.mul(alpha_u_x, numeric.dot(A, u)), numeric.mul(alpha_u_y, numeric.dot(u, A)));
+        v_1 = numeric.add(numeric.mul(alpha_v_x, numeric.dot(A, v)), numeric.mul(alpha_v_y, numeric.dot(v, A)));
+        
+        unew = numeric.add(u, numeric.add(u_1, numeric.mul(dt, numeric.add(numeric.add(this.a, numeric.mul(-1, u)), numeric.mul(-4, uv)))));
+        vnew = numeric.add(v, numeric.mul(sigma, numeric.add(numeric.mul(c, v_1), numeric.mul(dt, numeric.mul(this.b, numeric.add(u, numeric.mul(-1, uv)))))));
+        
+        u = unew;
+        v = vnew;
+        // End FTCS scheme for solving Lengyel-Epstein model ----
     }
 }
